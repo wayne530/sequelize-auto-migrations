@@ -17,6 +17,7 @@ const optionDefinitions = [
     { name: 'execute', alias: 'x', type: Boolean, description: 'Create new migration and execute it' },
     { name: 'migrations-path', type: String, description: 'The path to the migrations folder' },
     { name: 'models-path', type: String, description: 'The path to the models folder' },
+    { name: 'config-path', type: String, description: 'The path to the config folder' },
     { name: 'help', type: Boolean, description: 'Show this message' }
 ];
 
@@ -39,7 +40,8 @@ if(!process.env.PWD){
 
 const {
     migrationsDir, 
-    modelsDir
+    modelsDir,
+    configDir
 } = pathConfig(options);
 
 if (!fs.existsSync(modelsDir)) {
@@ -65,10 +67,10 @@ let previousState = {
 };
     
 try {
-    previousState = JSON.parse(fs.readFileSync(path.join(migrationsDir, '_current.json') ));
+    previousState = JSON.parse(fs.readFileSync(path.join(configDir, '_current.json') ));
 } catch (e) { }
 
-//console.log(path.join(migrationsDir, '_current.json'), JSON.parse(fs.readFileSync(path.join(migrationsDir, '_current.json') )))
+//console.log(path.join(configDir, '_current.json'), JSON.parse(fs.readFileSync(path.join(configDir, '_current.json') )))
 let sequelize = require(modelsDir).sequelize;
 
 let models = sequelize.models;
@@ -98,16 +100,9 @@ if (options.preview)
     process.exit(0);
 }
 
-// backup _current file
-if (fs.existsSync(path.join(migrationsDir, '_current.json')))
-    fs.writeFileSync(path.join(migrationsDir, '_current_bak.json'),
-        fs.readFileSync(path.join(migrationsDir, '_current.json'))
-    );
-
-
 // save current state
 currentState.revision = previousState.revision + 1;
-fs.writeFileSync(path.join(migrationsDir, '_current.json'), JSON.stringify(currentState, null, 4) );
+fs.writeFileSync(path.join(configDir, '_current.json'), JSON.stringify(currentState, null, 4) );
 
 // write migration to file
 let info = migrate.writeMigration(currentState.revision, 
